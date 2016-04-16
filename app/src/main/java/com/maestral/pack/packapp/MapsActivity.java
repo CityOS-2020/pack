@@ -1,6 +1,7 @@
 package com.maestral.pack.packapp;
 
 import android.content.Intent;
+import android.preference.Preference;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -10,22 +11,14 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity
         implements OnMapReadyCallback, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -99,8 +92,8 @@ public class MapsActivity extends FragmentActivity
     }
 
     public void clicked_settings(View view) {
-        Intent homepage = new Intent(MapsActivity.this, Settings.class);
-        startActivity(homepage);
+        Intent settingsScreen = new Intent(MapsActivity.this, SettingsActivity.class);
+        startActivity(settingsScreen);
     }
 
 
@@ -125,7 +118,7 @@ public class MapsActivity extends FragmentActivity
     //==============================================================================================
 
     private void streamLocation(){
-        Log.v("MapsActivity:::::::::::::::::::::::::::::::::::Streaming the location")
+        Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::::Streaming the location");
     }
 
     private class memberLocationListener implements LocationListener {

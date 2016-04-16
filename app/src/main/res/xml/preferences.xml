@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen android:title="Manage Groups"
+        android:key="preferencesParent"
+        android:summary="Manage groups and users">
+        <PreferenceCategory android:title="Create Group"
+            android:key="userCategory">
+        <EditTextPreference android:title="Add Group"
+            android:key="userGroup"
+            android:summary="Create a new group"></EditTextPreference>
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="Users in your group">
+            
+            <ListPreference android:title="Users in group"
+                android:summary="Select the kind of data that you would like to download"
+                android:key="usersList"
+                android:defaultValue="1"
+                android:entries="@array/listArray"
+                android:entryValues="@array/listValues"/>
+        </PreferenceCategory>
+
+    </PreferenceScreen>
+
+    <PreferenceCategory android:title="User Settings"
+        android:key="userSettingsCategory">
+    </PreferenceCategory>
+
+    <CheckBoxPreference android:title="Application Updates"
+        android:defaultValue="false"
+        android:summary="This option if selected will allow the application to check for latest versions."
+        android:key="applicationUpdates" />
+    <ListPreference     android:title="Download Details"
+        android:summary="Select the kind of data that you would like to download"
+        android:key="downloadType"
+        android:defaultValue="1"
+        android:entries="@array/listArray"
+        android:entryValues="@array/listValues" />
+</PreferenceScreen>
