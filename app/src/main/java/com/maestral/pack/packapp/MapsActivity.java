@@ -3,6 +3,7 @@ package com.maestral.pack.packapp;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.preference.Preference;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,15 +13,9 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-//import com.google.android.gms.appindexing.Action;
-//import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -53,6 +48,11 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 
 public class MapsActivity extends FragmentActivity
         implements OnMapReadyCallback,
@@ -202,8 +202,8 @@ public class MapsActivity extends FragmentActivity
     }
 
     public void clicked_settings(View view) {
-        Intent homepage = new Intent(MapsActivity.this, Settings.class);
-        startActivity(homepage);
+        Intent settingsScreen = new Intent(MapsActivity.this, SettingsActivity.class);
+        startActivity(settingsScreen);
     }
 
 
@@ -237,7 +237,6 @@ public class MapsActivity extends FragmentActivity
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::::Setting up location streaming");
         createLocationRequest();
         getCurrentLocationSettings();
-
     }
 
     private void createLocationRequest(){
@@ -311,7 +310,7 @@ public class MapsActivity extends FragmentActivity
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::Google API client onConnectionFailed");
-    }
+    }t s
 
 
     @Override

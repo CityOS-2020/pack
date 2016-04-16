@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen android:title="Manage Groups"
+        android:key="preferencesParent"
+        android:summary="Manage groups and users">
+        <PreferenceCategory android:title="Create Group"
+            android:key="userCategory">
+        <EditTextPreference android:title="Add Group"
+            android:key="userGroup"
+            android:summary="Create a new group"></EditTextPreference>
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="Users in your group">
+
+            <ListPreference android:title="Users in group"
+                android:summary="Select the kind of data that you would like to download"
+                android:key="usersList"
+                android:defaultValue="1"
+                android:entries="@array/listArray"
+                android:entryValues="@array/listValues"/>
+        </PreferenceCategory>
+
+    </PreferenceScreen>
+
+    <PreferenceCategory android:title="User Settings"
+        android:key="userSettingsCategory">
+
+        <EditTextPreference android:title="Username"
+            android:key="username"
+            android:summary="Add or edit username"></EditTextPreference>
+
+
+    <CheckBoxPreference android:title="Active"
+        android:defaultValue="true"
+        android:summary="This option if selected will allow other users to see where you are."
+        android:key="IsActive" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

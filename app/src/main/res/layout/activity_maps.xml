@@ -11,7 +11,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        tools:backgroundTint="@color/colorFAB"
         android:layout_margin="16dp"
         tools:fab_colorPressed="#003d99"
         android:onClick="clicked_settings"
