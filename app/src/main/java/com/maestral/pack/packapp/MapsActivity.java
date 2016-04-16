@@ -310,7 +310,7 @@ public class MapsActivity extends FragmentActivity
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::Google API client onConnectionFailed");
-    }t s
+    }
 
 
     @Override
