@@ -3,6 +3,7 @@ package com.maestral.pack.packapp.API;
 import com.maestral.pack.packapp.models.Member;
 
 import java.util.List;
+import java.util.StringTokenizer;
 
 import retrofit2.Call;
 import retrofit2.Retrofit;
@@ -22,6 +23,9 @@ public interface PackApi {
 
     @POST("Members")
     Call<Member> createMember(@Body Member member);
+
+    @POST("Groups/AddMemberToGroup")
+    Call<String> AddMemberToGroup(@Body Member member);
 
     @PUT("Groups/UpdateMemberGeoLocation/{username}")
     Call<String> updateLocation(@Body double[] location, @Path("username") String username);
