@@ -27,4 +27,5 @@ dependencies {
     compile 'com.android.support:design:23.2.1'
     compile 'com.squareup.retrofit2:retrofit:2.0.2'
     compile 'com.squareup.retrofit2:converter-gson:2.0.0'
+    compile 'com.github.siyamed:android-shape-imageview:0.9.+@aar'
 }
