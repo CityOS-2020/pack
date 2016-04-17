@@ -216,6 +216,7 @@ public class MapsActivity extends FragmentActivity
         }
 
 
+
         streamLocation();
 
 
@@ -488,7 +489,8 @@ public class MapsActivity extends FragmentActivity
                 location.getTime()
         };
         try {
-            Call<String> updateLocationCall = mAPI.updateLocation(locArray, "irfanka");
+            Self.getInstance().member.geoLocation = locArray;
+            Call<String> updateLocationCall = mAPI.updateLocation(locArray, Self.getInstance().member.userName);
 
             updateLocationCall.enqueue(new Callback<String>() {
                 @Override
