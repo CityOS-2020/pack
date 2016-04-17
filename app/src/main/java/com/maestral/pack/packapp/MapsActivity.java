@@ -3,10 +3,13 @@ package com.maestral.pack.packapp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
@@ -19,6 +22,7 @@ import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.github.siyamed.shapeimageview.CircularImageView;
 import com.google.android.gms.common.ConnectionResult;
@@ -42,6 +46,7 @@ import com.maestral.pack.packapp.API.PackApi;
 import com.maestral.pack.packapp.models.Member;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,6 +107,10 @@ public class MapsActivity extends FragmentActivity
                     public void onResponse(Call<List<Member>> call, Response<List<Member>> response) {
                         Log.v(TAG, "MapsActivity:::::::::::::::::::: Get Members response" + response.body());
                         parseMembers(response.body());
+                        if(mRetreivedMembers != null && mRetreivedMembers.size() > 0)
+                        {
+                            doDrawUserLocations();
+                        }
                     }
 
                     @Override
@@ -119,6 +128,52 @@ public class MapsActivity extends FragmentActivity
         }
     };
 
+    private void doDrawUserLocations()
+    {
+        for(Member m : mRetreivedMembers)
+        {
+            double longitude = m.geoLocation[1];
+            double lattitude = m.geoLocation[0];
+            mMap.addMarker(new MarkerOptions().position(
+                    new LatLng(lattitude, longitude))
+                    .title(m.lastName));
+        }
+    };
+
+    private float[] doCheckDistance(Member pointofReference)
+    {
+        int Radius = 6371;// radius of earth in Km
+
+        double myLattitude = Self.getInstance().member.geoLocation[0];
+        double myLongitude= Self.getInstance().member.geoLocation[1];
+
+        double pointLattitude = pointofReference.geoLocation[0];
+        double pointLongitude = pointofReference.geoLocation[1];
+
+//        double dLat = Math.toRadians(myLattitude - pointLattitude);
+//        double dLon = Math.toRadians(myLongitude - pointLongitude);
+//
+//        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+//                + Math.cos(Math.toRadians(pointLattitude))
+//                * Math.cos(Math.toRadians(myLattitude)) * Math.sin(dLon / 2)
+//                * Math.sin(dLon / 2);
+//        double c = 2 * Math.asin(Math.sqrt(a));
+//        double valueResult = Radius * c;
+//        double km = valueResult / 1;
+//        DecimalFormat newFormat = new DecimalFormat("####");
+//        int kmInDec = Integer.valueOf(newFormat.format(km));
+//        double meter = valueResult % 1000;
+//        int meterInDec = Integer.valueOf(newFormat.format(meter));
+//        Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
+//                + " Meter   " + meterInDec);
+//
+//        return Radius * c;
+
+        float[] results = new float[1];
+        Location.distanceBetween(myLattitude, myLongitude, pointLattitude, pointLongitude, results);
+        return results;
+    };
+
 
     Runnable mStatusChecker = new Runnable() {
         @Override
@@ -129,73 +184,46 @@ public class MapsActivity extends FragmentActivity
                 visibleDevices.clear();
                 secondsPassed = 0;
                 doBeaconDiscovery();
-                System.out.println("scanning will be run now");
+                    Log.v(TAG, "scanning...");
 //                }
-            } catch (Exception e) {
-                Log.v(TAG, e.getMessage());
-            } finally {
+            }
+            catch(Exception e)
+                {
+                    Log.v(TAG, e.getMessage());
+                }
+             finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
         }
     };
 
-    private boolean mPanicActive = false;
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private ScanCallback mScanCallback = new ScanCallback() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-
-            boolean newDeviceFound = BluetoothDevice.ACTION_FOUND.equals(action);
-//            boolean discoveryFinished = BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action);
-            if (newDeviceFound) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                try {
-                    checkIfBeaconTwo(device);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-//            if (discoveryFinished) {
-//                finishDiscovery();
-//            }
-        }
-
-        private void checkIfBeaconTwo(BluetoothDevice device) throws IOException {
-            if (device.getAddress().equals(beacon2Address)) {
-                mPanicActive = true;
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            if(result.getDevice().getAddress().equals(beacon2Address))
+            {
                 Call<String> updatePanicCall = mAPI.updatePanic(true, "irfanka");
 
                 updatePanicCall.enqueue(new Callback<String>() {
                     @Override
                     public void onResponse(Call<String> call, Response<String> response) {
+                        Toast.makeText(MapsActivity.this, "Panic Alert Successful", Toast.LENGTH_SHORT).show();
                         Log.v(TAG, "Panic Alert Successful");
                     }
 
                     @Override
                     public void onFailure(Call<String> call, Throwable throwable) {
+                        Toast.makeText(MapsActivity.this, "Panic Alert NOT Successful", Toast.LENGTH_SHORT).show();
                         Log.v(TAG, "Panic Alert Not Successful");
                     }
                 });
             }
+
+            //        mBtAdapter.startDiscovery();
+
         }
     };
-
-//    private void finishDiscovery() {
-//        System.out.println("discovery finished");
-//        boolean beaconOneFound = false;
-//        boolean beaconTwoFound = false;
-//
-//        for(String detectedDeviceAddress : visibleDevices){
-//            if(detectedDeviceAddress.equals(beacon1Address)){
-//                beaconOneFound = true;
-//            }
-//            if(detectedDeviceAddress.equals(beacon2Address)){
-//                beaconTwoFound = true;
-//            }
-//        }
-//        scanRunning = false;
-//    }
-
 
 
     @Override
@@ -301,12 +329,9 @@ public class MapsActivity extends FragmentActivity
 
             params.setMargins(60, 40, 0, 0);
 
-
         }
 
-
     }
-
 
     @Override
     protected void onStart() {
@@ -477,6 +502,7 @@ public class MapsActivity extends FragmentActivity
 
     @Override
     public void onLocationChanged(Location location) {
+
         String loc = String.valueOf(location.getLatitude()) + " " + String.valueOf(location.getLongitude());
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::: Location update: " + loc);
         double[] locArray = new double[]{
@@ -504,16 +530,22 @@ public class MapsActivity extends FragmentActivity
 
                 }
             });
+
+            Member alfa = null;
+            if(mRetreivedMembers != null)
+                for (Member m : mRetreivedMembers)
+                    if (m.isGroupLeader)
+                        alfa = m;
+
+            if(alfa != null && doCheckDistance(alfa)[0] > 30.0)
+                doDriftingAwayAlert();
+
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
     }
 
     private void setUpBluetoothEvents() {
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        this.registerReceiver(mReceiver, filter);
-        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        this.registerReceiver(mReceiver, filter);
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
@@ -524,8 +556,16 @@ public class MapsActivity extends FragmentActivity
     }
 
     private void doBeaconDiscovery() {
-        mBtAdapter.startDiscovery();
+        mBtAdapter.getBluetoothLeScanner().startScan(mScanCallback);
         scanRunning = true;
+    }
+
+    private void doDriftingAwayAlert()
+    {
+        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        // Vibrate for 1 second
+        v.vibrate(1000);
+        Toast.makeText(MapsActivity.this, "You are drifting away from your group", Toast.LENGTH_SHORT).show();
     }
 
 }
