@@ -45,23 +45,25 @@ public class SettingsActivity extends PreferenceActivity {
                         createGroupTxt.setText("");
                     }
                 }
+                else if(eventTriggered == 2){
+                    EditTextPreference joinGroupTxt = (EditTextPreference) findPreference("joinGroup");
+                    if (joinGroupTxt != null) {
+                        joinGroupTxt.setText("");
+                    }
+                }
             }
 
             SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
             leaderGroupName = SP.getString("createGroup", "");
+            joinGroupName = SP.getString("joinGroup", "");
 
             if(leaderGroupName != "") {
                 Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsLeaderActivity.class);
                 startActivity(settingsLeaderScreen);
             }
             else if(joinGroupName != ""){
-                /*addPreferencesFromResource(R.xml.memberscreen);
-
-                Preference groupNamePref = (Preference) findPreference("groupName");
-                if(groupNamePref!=null)
-                {
-                    groupNamePref.setTitle("You are part of " + leaderGroupName + " group.");
-                }*/
+                Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsMemberActivity.class);
+                startActivity(settingsLeaderScreen);
             }
 
 
@@ -117,8 +119,11 @@ public class SettingsActivity extends PreferenceActivity {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
                         if(mainScreen!=null) {
-                            mainScreen.removeAll();
-                            addPreferencesFromResource(R.xml.memberscreen);
+                            if(newValue != null){
+                                joinGroupName = newValue.toString();
+                            }
+                            Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsMemberActivity.class);
+                            startActivity(settingsLeaderScreen);
                         }
                         Log.d("test1", "memberScreen");
                         //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
