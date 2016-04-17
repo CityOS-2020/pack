@@ -25,11 +25,16 @@
             android:summary="Add or edit username"
             android:title="Username"></EditTextPreference>
 
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="IsActive"
-            android:summary="This option if selected will allow other users to see where you are."
-            android:title="Active" />
+        <EditTextPreference
+            android:key="userFirstName"
+            android:summary="Add or edit first name"
+            android:title="First Name"></EditTextPreference>
+
+        <EditTextPreference
+            android:key="userLastName"
+            android:summary="Add or edit last name"
+            android:title="Last Name"></EditTextPreference>
+
     </PreferenceCategory>
 
 </PreferenceScreen>
