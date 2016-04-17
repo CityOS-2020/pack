@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="mainScreen">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="memberPrefScreen">
     <PreferenceCategory
         android:key="userCategory"
         android:title="Groups">
 
-        <EditTextPreference
-            android:key="createGroup"
-            android:summary="Create a new group"
-            android:title="Create Group"></EditTextPreference>
-
-        <EditTextPreference
-            android:key="joinGroup"
-            android:summary="Join existing group"
-            android:title="Join Group"></EditTextPreference>
-
+    <Preference
+        android:key="groupName"
+        android:enabled="false"
+        android:title="You are part of WolfPack"></Preference>
+    <Preference android:key="leaveGroup"
+        android:title="Leave Group"
+        android:summary="Leave current group."></Preference>
     </PreferenceCategory>
-
     <PreferenceCategory
         android:key="userSettingsCategory"
         android:title="User Settings">
@@ -31,5 +28,4 @@
             android:summary="This option if selected will allow other users to see where you are."
             android:title="Active" />
     </PreferenceCategory>
-
 </PreferenceScreen>
