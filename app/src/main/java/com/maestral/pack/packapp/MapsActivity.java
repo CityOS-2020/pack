@@ -15,7 +15,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
+import com.github.siyamed.shapeimageview.CircularImageView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -71,6 +75,8 @@ public class MapsActivity extends FragmentActivity
 
     private PackApi mAPI;
 
+    private List<Member> mRetreivedMembers;
+
 
     public interface PackApi{
         @GET("Members")
@@ -101,6 +107,10 @@ public class MapsActivity extends FragmentActivity
                     .build();
         }
 
+
+
+
+
         streamLocation();
 
 
@@ -119,11 +129,14 @@ public class MapsActivity extends FragmentActivity
 
         Call<List<Member>> getMembersCall = mAPI.getMembers();
 
+
+
         try{
             getMembersCall.enqueue(new Callback<List<Member>>() {
                 @Override
                 public void onResponse(Call<List<Member>> call, Response<List<Member>> response) {
                     Log.v(TAG, "MapsActivity:::::::::::::::::::: Get Members response" + response.body());
+                    parseMembers(response.body());
                 }
 
                 @Override
@@ -159,6 +172,38 @@ public class MapsActivity extends FragmentActivity
 
 
 
+    private void parseMembers(List<Member> members){
+        if (members == null) return;
+        mRetreivedMembers = members;
+
+
+        RelativeLayout root = (RelativeLayout) findViewById(R.id.maps_root_layout);
+
+        for (int i = 0; i<members.size(); i++){
+            CircularImageView memberAvatar = new CircularImageView(this);
+            memberAvatar.setId(i+1);
+            int avatarResourceId = getResources().getIdentifier("avatar_" + (i+1), "drawable", getPackageName());
+            memberAvatar.setImageResource(avatarResourceId);
+            root.addView(memberAvatar);
+
+            memberAvatar.getLayoutParams().height = 100;
+            memberAvatar.getLayoutParams().width = 100;
+            
+
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) memberAvatar.getLayoutParams();
+
+            if (i>0){
+                params.addRule(RelativeLayout.BELOW, i-1);
+            }
+
+            params.setMargins(60, 40, 0, 0);
+
+
+
+        }
+
+
+    }
 
 
     @Override
