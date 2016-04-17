@@ -38,6 +38,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.maestral.pack.packapp.API.PackApi;
 import com.maestral.pack.packapp.models.Member;
 
 import java.io.IOException;
@@ -195,19 +196,6 @@ public class MapsActivity extends FragmentActivity
 //        scanRunning = false;
 //    }
 
-    public interface PackApi {
-        @GET("Groups/GetAllGroupMembers")
-        Call<List<Member>> getMembers();
-
-        @POST("Members")
-        Call<Member> createMember(@Body Member member);
-
-        @PUT("Members/PutMemberGeoLocation/{username}")
-        Call<String> updateLocation(@Body double[] location, @Path("username") String username);
-
-        @PUT("Members/PutMemberIsPanicking/{username}")
-        Call<String> updatePanic(@Body boolean isPanicking, @Path("username") String username);
-    }
 
 
     @Override
@@ -246,12 +234,8 @@ public class MapsActivity extends FragmentActivity
         setUpBluetoothEvents();
         initDiscoveryService();
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://172.18.1.172/PackWebApiServices/api/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
 
-        mAPI = retrofit.create(PackApi.class);
+        mAPI = PackApi.retrofit.create(PackApi.class);
 
         double[] location = new double[]{0.0, 0.0, 0.0};
 
