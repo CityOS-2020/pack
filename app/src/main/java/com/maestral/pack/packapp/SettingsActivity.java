@@ -189,6 +189,20 @@ public class SettingsActivity extends PreferenceActivity {
                         if(mainScreen!=null) {
                             if(newValue != null){
                                 joinGroupName = newValue.toString();
+
+                                Call<String> AddMemberToGroupCall = mAPI.AddMemberToGroup(Self.getInstance().member);
+
+                                AddMemberToGroupCall.enqueue(new Callback<String>() {
+                                    @Override
+                                    public void onResponse(Call<String> call, Response<String> response) {
+                                        Log.i("SettingsActivity", "Success calling JoinGroup API.");
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<String> call, Throwable t) {
+                                        Log.e("SettingsActiviy", "Error when calling JoinGroup API");
+                                    }
+                                });
                             }
                             Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsMemberActivity.class);
                             startActivity(settingsLeaderScreen);
