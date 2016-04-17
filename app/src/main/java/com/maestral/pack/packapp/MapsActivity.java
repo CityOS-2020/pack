@@ -1,6 +1,12 @@
 package com.maestral.pack.packapp;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.preference.Preference;
@@ -15,6 +21,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,6 +42,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.maestral.pack.packapp.models.Member;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,6 +70,15 @@ public class MapsActivity extends FragmentActivity
         GoogleApiClient.OnConnectionFailedListener,
         com.google.android.gms.location.LocationListener{
 
+    private BluetoothAdapter mBtAdapter;
+    private String beacon1Address = "EC:11:27:2A:56:B3";
+    private String beacon2Address = "EC:11:27:29:B5:63";
+    private boolean scanRunning;
+    private int mInterval = 1000;
+    private int secondsPassed = 0;
+    private Handler mHandler;
+    private List<String> visibleDevices = new ArrayList<>();
+    private boolean beaconOneModelShown;
     private static final int MY_LOCATION_PERMISSION = 1;
     private static final String TAG = "PackApp";
     private GoogleMap mMap;
@@ -71,6 +89,84 @@ public class MapsActivity extends FragmentActivity
 
     private PackApi mAPI;
 
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                System.out.println("repeating task");
+//                if (!scanRunning) {
+                    visibleDevices.clear();
+                    secondsPassed = 0;
+                    doBeaconDiscovery();
+                    System.out.println("scanning will be run now");
+//                }
+            }
+            catch(Exception e)
+                {
+                    Log.v(TAG, e.getMessage());
+                }
+             finally {
+                mHandler.postDelayed(mStatusChecker, mInterval);
+            }
+        }
+    };
+
+    private boolean mPanicActive = false;
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            boolean newDeviceFound = BluetoothDevice.ACTION_FOUND.equals(action);
+//            boolean discoveryFinished = BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action);
+            if (newDeviceFound) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                try {
+                    checkIfBeaconTwo(device);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+//            if (discoveryFinished) {
+//                finishDiscovery();
+//            }
+        }
+
+        private void checkIfBeaconTwo(BluetoothDevice device) throws IOException {
+            if(device.getAddress().equals(beacon2Address)){
+                mPanicActive = true;
+                Call<String> updatePanicCall = mAPI.updatePanic(true, "irfanka");
+
+                updatePanicCall.enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        Log.v(TAG, "Panic Alert Successful");
+                    }
+
+                    @Override
+                    public void onFailure(Call<String> call, Throwable throwable) {
+                        Log.v(TAG, "Panic Alert Not Successful");
+                    }
+                });
+            }
+        }
+    };
+
+//    private void finishDiscovery() {
+//        System.out.println("discovery finished");
+//        boolean beaconOneFound = false;
+//        boolean beaconTwoFound = false;
+//
+//        for(String detectedDeviceAddress : visibleDevices){
+//            if(detectedDeviceAddress.equals(beacon1Address)){
+//                beaconOneFound = true;
+//            }
+//            if(detectedDeviceAddress.equals(beacon2Address)){
+//                beaconTwoFound = true;
+//            }
+//        }
+//        scanRunning = false;
+//    }
 
     public interface PackApi{
         @GET("Members")
@@ -81,6 +177,9 @@ public class MapsActivity extends FragmentActivity
 
         @PUT("Members/PutMemberGeoLocation/{username}")
         Call<String> updateLocation(@Body double[] location, @Path("username") String username);
+
+        @PUT("Members/PutMemberIsPanicking/{username}")
+        Call<String> updatePanic(@Body boolean isPanicking, @Path("username") String username);
     }
 
 
@@ -92,7 +191,7 @@ public class MapsActivity extends FragmentActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
+        mHandler = new Handler();
         if (mGoogleClient == null){
             mGoogleClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -101,8 +200,20 @@ public class MapsActivity extends FragmentActivity
                     .build();
         }
 
-        streamLocation();
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBtAdapter = bluetoothManager.getAdapter();
 
+        if (!mBtAdapter.isEnabled()) {
+            if (!mBtAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, 1);
+            }
+        }
+
+        streamLocation();
+        setUpBluetoothEvents();
+        initDiscoveryService();
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://172.18.1.172/PackWebApiServices/api/")
@@ -165,6 +276,24 @@ public class MapsActivity extends FragmentActivity
     protected void onStart(){
         mGoogleClient.connect();
         super.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopRepeatingTask();
+    }
+
+    private void initDiscoveryService() {
+        startRepeatingTask();
+    }
+
+    void startRepeatingTask() {
+        mStatusChecker.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mStatusChecker);
     }
 
     @Override
@@ -246,6 +375,7 @@ public class MapsActivity extends FragmentActivity
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
+
 
     private void getCurrentLocationSettings(){
         // Get current location settings
@@ -347,5 +477,23 @@ public class MapsActivity extends FragmentActivity
         }
     }
 
+    private void setUpBluetoothEvents() {
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        this.registerReceiver(mReceiver, filter);
+        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        this.registerReceiver(mReceiver, filter);
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopRepeatingTask();
+    }
+
+    private void doBeaconDiscovery() {
+        mBtAdapter.startDiscovery();
+        scanRunning = true;
+    }
 
 }
