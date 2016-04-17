@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.preference.Preference;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,14 +16,9 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.github.siyamed.shapeimageview.CircularImageView;
 import com.google.android.gms.common.ConnectionResult;
@@ -48,7 +42,6 @@ import com.maestral.pack.packapp.models.Member;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import retrofit2.Call;
@@ -61,6 +54,7 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.GoogleMap;
@@ -72,7 +66,7 @@ public class MapsActivity extends FragmentActivity
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        com.google.android.gms.location.LocationListener{
+        com.google.android.gms.location.LocationListener {
 
     private BluetoothAdapter mBtAdapter;
     private String beacon1Address = "EC:11:27:2A:56:B3";
@@ -81,6 +75,7 @@ public class MapsActivity extends FragmentActivity
     private int mInterval = 1000;
     private int secondsPassed = 0;
     private Handler mHandler;
+    private Handler mGroupsUpdateHandler;
     private List<String> visibleDevices = new ArrayList<>();
     private boolean beaconOneModelShown;
     private static final int MY_LOCATION_PERMISSION = 1;
@@ -95,23 +90,49 @@ public class MapsActivity extends FragmentActivity
 
     private List<Member> mRetreivedMembers;
 
+    Runnable mGroupsUpdater = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::: Polling group data");
+                Call<List<Member>> getMembersCall = mAPI.getMembers();
+                getMembersCall.enqueue(new Callback<List<Member>>() {
+                    @Override
+                    public void onResponse(Call<List<Member>> call, Response<List<Member>> response) {
+                        Log.v(TAG, "MapsActivity:::::::::::::::::::: Get Members response" + response.body());
+                        parseMembers(response.body());
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<Member>> call, Throwable t) {
+                        Log.e(TAG, t.toString());
+                    }
+                });
+            }
+            catch (Exception e){
+                Log.e(TAG, e.toString());
+            }
+            finally {
+                mGroupsUpdateHandler.postDelayed(mGroupsUpdater, 5000);
+            }
+        }
+    };
+
+
     Runnable mStatusChecker = new Runnable() {
         @Override
         public void run() {
             try {
                 System.out.println("repeating task");
 //                if (!scanRunning) {
-                    visibleDevices.clear();
-                    secondsPassed = 0;
-                    doBeaconDiscovery();
-                    System.out.println("scanning will be run now");
+                visibleDevices.clear();
+                secondsPassed = 0;
+                doBeaconDiscovery();
+                System.out.println("scanning will be run now");
 //                }
-            }
-            catch(Exception e)
-                {
-                    Log.v(TAG, e.getMessage());
-                }
-             finally {
+            } catch (Exception e) {
+                Log.v(TAG, e.getMessage());
+            } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
         }
@@ -139,7 +160,7 @@ public class MapsActivity extends FragmentActivity
         }
 
         private void checkIfBeaconTwo(BluetoothDevice device) throws IOException {
-            if(device.getAddress().equals(beacon2Address)){
+            if (device.getAddress().equals(beacon2Address)) {
                 mPanicActive = true;
                 Call<String> updatePanicCall = mAPI.updatePanic(true, "irfanka");
 
@@ -174,8 +195,8 @@ public class MapsActivity extends FragmentActivity
 //        scanRunning = false;
 //    }
 
-    public interface PackApi{
-        @GET("Members")
+    public interface PackApi {
+        @GET("Groups/GetAllGroupMembers")
         Call<List<Member>> getMembers();
 
         @POST("Members")
@@ -198,7 +219,7 @@ public class MapsActivity extends FragmentActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         mHandler = new Handler();
-        if (mGoogleClient == null){
+        if (mGoogleClient == null) {
             mGoogleClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
@@ -208,7 +229,6 @@ public class MapsActivity extends FragmentActivity
 
 
         streamLocation();
-
 
 
         final BluetoothManager bluetoothManager =
@@ -239,29 +259,13 @@ public class MapsActivity extends FragmentActivity
 
         Call<Member> createMemberCall = mAPI.createMember(newMember);
 
-        Call<List<Member>> getMembersCall = mAPI.getMembers();
+
+        mGroupsUpdateHandler = new Handler();
+
+        startPollingGroups();
 
 
-
-        try{
-            getMembersCall.enqueue(new Callback<List<Member>>() {
-                @Override
-                public void onResponse(Call<List<Member>> call, Response<List<Member>> response) {
-                    Log.v(TAG, "MapsActivity:::::::::::::::::::: Get Members response" + response.body());
-                    parseMembers(response.body());
-                }
-
-                @Override
-                public void onFailure(Call<List<Member>> call, Throwable t) {
-                    Log.e(TAG, t.toString());
-                }
-            });
-        }
-        catch (Exception e){
-            Log.e(TAG, e.toString());
-        }
-
-        try{
+        try {
             Log.v(TAG, "MapsActivity::::::::::::::::::::::::::::::::::::::: Making a POST request");
             createMemberCall.enqueue(new Callback<Member>() {
                 @Override
@@ -274,42 +278,43 @@ public class MapsActivity extends FragmentActivity
                     Log.e(TAG, "Error");
                 }
             });
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
 
 
     }
 
+    private void startPollingGroups() {
+        mGroupsUpdater.run();
+    }
 
 
-    private void parseMembers(List<Member> members){
+    private void parseMembers(List<Member> members) {
         if (members == null) return;
         mRetreivedMembers = members;
 
 
         RelativeLayout root = (RelativeLayout) findViewById(R.id.maps_root_layout);
 
-        for (int i = 0; i<members.size(); i++){
+        for (int i = 0; i < members.size(); i++) {
             CircularImageView memberAvatar = new CircularImageView(this);
-            memberAvatar.setId(i+1);
-            int avatarResourceId = getResources().getIdentifier("avatar_" + (i+1), "drawable", getPackageName());
+            memberAvatar.setId(i + 1);
+            int avatarResourceId = getResources().getIdentifier("avatar_" + (i + 1), "drawable", getPackageName());
             memberAvatar.setImageResource(avatarResourceId);
             root.addView(memberAvatar);
 
             memberAvatar.getLayoutParams().height = 100;
             memberAvatar.getLayoutParams().width = 100;
-            
+
 
             RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) memberAvatar.getLayoutParams();
 
-            if (i>0){
-                params.addRule(RelativeLayout.BELOW, i-1);
+            if (i > 0) {
+                params.addRule(RelativeLayout.BELOW, i - 1);
             }
 
             params.setMargins(60, 40, 0, 0);
-
 
 
         }
@@ -319,7 +324,7 @@ public class MapsActivity extends FragmentActivity
 
 
     @Override
-    protected void onStart(){
+    protected void onStart() {
         mGoogleClient.connect();
         super.onStart();
     }
@@ -343,7 +348,7 @@ public class MapsActivity extends FragmentActivity
     }
 
     @Override
-    protected void onStop(){
+    protected void onStop() {
         mGoogleClient.disconnect();
         super.onStop();
     }
@@ -363,9 +368,8 @@ public class MapsActivity extends FragmentActivity
         mMap = googleMap;
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, MY_LOCATION_PERMISSION);
-        }
-        else{
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_LOCATION_PERMISSION);
+        } else {
             mMap.setMyLocationEnabled(true);
         }
 
@@ -383,21 +387,19 @@ public class MapsActivity extends FragmentActivity
 
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
-        switch (requestCode){
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
             case MY_LOCATION_PERMISSION: {
                 //If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    try{
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
                         mMap.setMyLocationEnabled(true);
-                    }
-                    catch (SecurityException e){
+                    } catch (SecurityException e) {
                         // This is just to get rid of compiler warnings
                     }
                     streamLocation();
                     Log.d(TAG, "::::::::::::::::::::::::::::::::::::::::::::::::Permission granted");
-                }
-                else{
+                } else {
                     Log.d(TAG, "::::::::::::::::::::::::::::::::::::::::::::::::Permission denied");
                 }
             }
@@ -408,13 +410,13 @@ public class MapsActivity extends FragmentActivity
     // Sending GPS location to the API
     //==============================================================================================
 
-    private void streamLocation(){
+    private void streamLocation() {
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::::Setting up location streaming");
         createLocationRequest();
         getCurrentLocationSettings();
     }
 
-    private void createLocationRequest(){
+    private void createLocationRequest() {
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::::Making a LocationRequest");
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
@@ -423,7 +425,7 @@ public class MapsActivity extends FragmentActivity
     }
 
 
-    private void getCurrentLocationSettings(){
+    private void getCurrentLocationSettings() {
         // Get current location settings
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
@@ -439,7 +441,7 @@ public class MapsActivity extends FragmentActivity
             public void onResult(LocationSettingsResult locationSettingsResult) {
                 final Status status = locationSettingsResult.getStatus();
                 final LocationSettingsStates states = locationSettingsResult.getLocationSettingsStates();
-                switch (status.getStatusCode()){
+                switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
                         // GPS is already ON
                         Log.v(TAG, "MapsActivity:::::::::::::::::::::: GPS is ON");
@@ -461,9 +463,9 @@ public class MapsActivity extends FragmentActivity
     public void onConnected(@Nullable Bundle bundle) {
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::Google API client onConnected");
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::Getting the last known GPS location");
-        try{
+        try {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleClient);
-            if (mLastLocation != null){
+            if (mLastLocation != null) {
                 String lat = String.valueOf(mLastLocation.getLatitude());
                 String lng = String.valueOf(mLastLocation.getLongitude());
                 Log.v(TAG, "MapsActivity::::::::::::::::::Last known location: " + lat + " " + lng);
@@ -471,8 +473,7 @@ public class MapsActivity extends FragmentActivity
                 // Initiate location streaming
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleClient, mLocationRequest, this);
             }
-        }
-        catch(SecurityException e){
+        } catch (SecurityException e) {
             Log.e(TAG, "Security Exception getting the last known location:" + e.getMessage());
         }
     }
@@ -490,10 +491,10 @@ public class MapsActivity extends FragmentActivity
 
 
     @Override
-    public void onLocationChanged(Location location){
+    public void onLocationChanged(Location location) {
         String loc = String.valueOf(location.getLatitude()) + " " + String.valueOf(location.getLongitude());
         Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::: Location update: " + loc);
-        double[] locArray = new double[] {
+        double[] locArray = new double[]{
                 location.getLatitude(),
                 location.getLongitude(),
                 location.getAltitude(),
@@ -502,7 +503,7 @@ public class MapsActivity extends FragmentActivity
                 location.getAccuracy(),
                 location.getTime()
         };
-        try{
+        try {
             Call<String> updateLocationCall = mAPI.updateLocation(locArray, "irfanka");
 
             updateLocationCall.enqueue(new Callback<String>() {
@@ -517,8 +518,7 @@ public class MapsActivity extends FragmentActivity
 
                 }
             });
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
     }
