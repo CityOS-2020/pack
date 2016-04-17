@@ -21,9 +21,10 @@ public class Self {
 
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
         String username = SP.getString("username", "");
+        String firstName = SP.getString("userFirstName", "");
+        String lastName = SP.getString("userLastName", "");
 
-
-        member = new Member(username, "Irfan", "Kahvedzic", false, null);
+        member = new Member(username, firstName, lastName, false, null);
 
     }
 

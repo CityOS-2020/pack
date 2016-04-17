@@ -11,6 +11,12 @@ import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.util.Log;
 
+import com.maestral.pack.packapp.API.PackApi;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SettingsActivity extends PreferenceActivity {
 
     @Override
@@ -21,8 +27,8 @@ public class SettingsActivity extends PreferenceActivity {
 
     public static class MyPreferenceFragment extends PreferenceFragment
     {
+        PackApi mAPI;
         PreferenceScreen mainScreen;
-        PreferenceScreen leaderPrefScreen;
         int eventTriggered = 0;
         String leaderGroupName = "";
         String joinGroupName = "";
@@ -66,21 +72,70 @@ public class SettingsActivity extends PreferenceActivity {
                 startActivity(settingsLeaderScreen);
             }
 
+            mAPI = PackApi.retrofit.create(PackApi.class);
 
             setEventListener_CreateGroup();
             setEventListener_JoinGroup();
+            setEventListener_AddEditUsername();
+            setEventListener_AddEditFirstName();
+            setEventListener_AddEditLastname();
 
-            Preference userGroupPref = (Preference) findPreference("userGroup");
-            if(userGroupPref != null) {
-                userGroupPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+        }
 
+        void setEventListener_AddEditLastname(){
+            EditTextPreference userLastName = (EditTextPreference)findPreference("userLastName");
+
+            if(userLastName != null) {
+                userLastName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                     @Override
-                    public boolean onPreferenceClick(Preference preference) {
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        if(mainScreen!=null) {
+                            if(newValue != null){
+                                Self.getInstance().member.lastName = newValue.toString();
+                            }
+                        }
+                        Log.d("test1", "User last name: " + newValue.toString());
+                        //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
+                        return true;
+                    }
+                });
+            }
+        }
 
-                        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(preference.getContext());
-                        String strUserGroup = SP.getString("userGroup", "");
+        void setEventListener_AddEditUsername(){
+            EditTextPreference username = (EditTextPreference)findPreference("username");
 
-                        Log.e("EditTextPreference", "In onPreferenceClick, groupname: " + strUserGroup);
+            if(username != null) {
+                username.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        if(mainScreen!=null) {
+                            if(newValue != null){
+                                Self.getInstance().member.userName = newValue.toString();
+                            }
+                        }
+                        Log.d("test1", "Username: " + newValue.toString());
+                        //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
+                        return true;
+                    }
+                });
+            }
+        }
+
+        void setEventListener_AddEditFirstName(){
+            EditTextPreference userFirstName = (EditTextPreference)findPreference("userFirstName");
+
+            if(userFirstName != null) {
+                userFirstName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        if(mainScreen!=null) {
+                            if(newValue != null){
+                                Self.getInstance().member.firstName = newValue.toString();
+                            }
+                        }
+                        Log.d("test1", "User first name: " + newValue.toString());
+                        //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
                         return true;
                     }
                 });
@@ -98,12 +153,25 @@ public class SettingsActivity extends PreferenceActivity {
                         if(mainScreen!=null) {
                             if(newValue != null){
                                 leaderGroupName = newValue.toString();
+                                Call<String> AddGroupCall = mAPI.AddGroup(Self.getInstance().member, leaderGroupName);
+
+                                AddGroupCall.enqueue(new Callback<String>() {
+                                    @Override
+                                    public void onResponse(Call<String> call, Response<String> response) {
+                                        Log.i("SettingsActivity", "Success calling CreateGroup API.");
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<String> call, Throwable t) {
+                                        Log.e("SettingsActiviy", "Error when calling CreateGroup API");
+                                    }
+                                });
                             }
 
                             Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsLeaderActivity.class);
                             startActivity(settingsLeaderScreen);
                         }
-                        Log.d("test1", "test1" + newValue.toString());
+                        Log.d("SettingsActivity", "CreateGroup" + newValue.toString());
                         //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
                         return true;
                     }

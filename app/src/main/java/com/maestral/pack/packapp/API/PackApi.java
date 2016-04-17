@@ -29,6 +29,8 @@ public interface PackApi {
     @PUT("Members/PutMemberIsPanicking/{username}")
     Call<String> updatePanic(@Body boolean isPanicking, @Path("username") String username);
 
+    @POST("Groups/AddGroup/{groupName}")
+    Call<String> AddGroup(@Body Member member, @Path("groupName") String groupName);
 
     public static final Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("http://172.18.1.172/PackWebApiServices/api/")
