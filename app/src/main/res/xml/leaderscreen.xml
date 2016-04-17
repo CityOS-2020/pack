@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="leaderPrefScreen">
+    <PreferenceCategory
+        android:key="userCategory"
+        android:title="Groups">
+
+        <Preference
+            android:key="groupName"
+            android:enabled="false"
+            android:title="You are leader of WolfPack group."></Preference>
+
+        <PreferenceScreen
+            android:key="manageGroup"
+            android:summary="Manage your group"
+            android:title="Manage Group">
+
+            <Preference
+                android:key="groupName"
+                android:enabled="false"
+                android:title="You are part of WolfPack"></Preference>
+
+        </PreferenceScreen>
+
+        <Preference
+            android:key="leaveGroup"
+            android:title="Close Group"></Preference>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="userSettingsCategory"
+        android:title="User Settings">
+
+        <EditTextPreference
+            android:key="username"
+            android:summary="Add or edit username"
+            android:title="Username"></EditTextPreference>
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="IsActive"
+            android:summary="This option if selected will allow other users to see where you are."
+            android:title="Active" />
+    </PreferenceCategory>
+</PreferenceScreen>
