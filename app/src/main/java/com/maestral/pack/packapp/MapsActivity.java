@@ -19,6 +19,7 @@ import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.github.siyamed.shapeimageview.CircularImageView;
 import com.google.android.gms.common.ConnectionResult;
@@ -100,8 +101,8 @@ public class MapsActivity extends FragmentActivity
                 getMembersCall.enqueue(new Callback<List<Member>>() {
                     @Override
                     public void onResponse(Call<List<Member>> call, Response<List<Member>> response) {
-                        Log.v(TAG, "MapsActivity:::::::::::::::::::: Get Members response" + response.body());
-                        parseMembers(response.body());
+                        Log.v(TAG, "MapsActivity:::::::::::::::::::: Get all Members response: " + response.body());
+//                        parseMembers(response.body());
                     }
 
                     @Override
@@ -215,7 +216,7 @@ public class MapsActivity extends FragmentActivity
                     .build();
         }
 
-
+        parseMembers();
 
         streamLocation();
 
@@ -275,7 +276,18 @@ public class MapsActivity extends FragmentActivity
     }
 
 
-    private void parseMembers(List<Member> members) {
+
+
+
+
+    private void parseMembers() {
+        final List<Member> members = new ArrayList<Member>();
+
+        members.add(0, new Member("irfanka", "Irfan", "Kahvedzic", false, null));
+        members.add(0, new Member("aleti", "Ale", "Tiro", false, null));
+        members.add(0, new Member("adnanbr", "Adnan", "Brotlic", false, null));
+        members.add(0, new Member("slihha", "Salih", "Hajlakovic", false, null));
+
         if (members == null) return;
         mRetreivedMembers = members;
 
@@ -285,21 +297,37 @@ public class MapsActivity extends FragmentActivity
         for (int i = 0; i < members.size(); i++) {
             CircularImageView memberAvatar = new CircularImageView(this);
             memberAvatar.setId(i + 1);
+
+
             int avatarResourceId = getResources().getIdentifier("avatar_" + (i + 1), "drawable", getPackageName());
             memberAvatar.setImageResource(avatarResourceId);
+
             root.addView(memberAvatar);
 
-            memberAvatar.getLayoutParams().height = 100;
-            memberAvatar.getLayoutParams().width = 100;
+
 
 
             RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) memberAvatar.getLayoutParams();
 
+            params.height = 100 + (i*2);
+            params.width = 100;
+
             if (i > 0) {
-                params.addRule(RelativeLayout.BELOW, i - 1);
+                params.addRule(RelativeLayout.BELOW, i);
             }
 
             params.setMargins(60, 40, 0, 0);
+
+
+            memberAvatar.setOnClickListener(new customOnClickListener(members.get(i), root, i));
+
+            TextView memberName = new TextView(MapsActivity);
+            memberName.setText(members.get(i).firstName + " " + members.get(i).lastName);
+            root.addView(memberName);
+
+            RelativeLayout.LayoutParams p = (RelativeLayout.LayoutParams) memberName.getLayoutParams();
+
+            p.addRule(RelativeLayout.RIGHT_OF, i);
 
 
         }
@@ -307,6 +335,33 @@ public class MapsActivity extends FragmentActivity
 
     }
 
+    com.maestral.pack.packapp.MapsActivity MapsActivity = this;
+
+    private class customOnClickListener implements View.OnClickListener{
+
+        Member member;
+        RelativeLayout rootLayout;
+        int index;
+
+        public customOnClickListener(Member member, RelativeLayout rootLayout, int index){
+            this.member = member;
+            this.rootLayout = rootLayout;
+            this.index = index;
+        }
+
+        @Override
+        public void onClick(View v){
+            Log.v(TAG, "MapsActivity:::::::::::::::::::::::::::::::::::: Member avatar clicked: " + this.member);
+//            v.getLayoutParams().height = 130;
+//            v.getLayoutParams().width = 130;
+
+        }
+    }
+
+
+    private Member getMember(int index){
+        return mRetreivedMembers.get(index);
+    }
 
     @Override
     protected void onStart() {
