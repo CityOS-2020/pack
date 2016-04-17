@@ -11,6 +11,12 @@ import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.util.Log;
 
+import com.maestral.pack.packapp.API.PackApi;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SettingsActivity extends PreferenceActivity {
 
     @Override
@@ -21,8 +27,8 @@ public class SettingsActivity extends PreferenceActivity {
 
     public static class MyPreferenceFragment extends PreferenceFragment
     {
+        PackApi mAPI;
         PreferenceScreen mainScreen;
-        PreferenceScreen leaderPrefScreen;
         int eventTriggered = 0;
         String leaderGroupName = "";
         String joinGroupName = "";
@@ -66,6 +72,7 @@ public class SettingsActivity extends PreferenceActivity {
                 startActivity(settingsLeaderScreen);
             }
 
+            mAPI = PackApi.retrofit.create(PackApi.class);
 
             setEventListener_CreateGroup();
             setEventListener_JoinGroup();
@@ -146,12 +153,25 @@ public class SettingsActivity extends PreferenceActivity {
                         if(mainScreen!=null) {
                             if(newValue != null){
                                 leaderGroupName = newValue.toString();
+                                Call<String> AddGroupCall = mAPI.AddGroup(Self.getInstance().member, leaderGroupName);
+
+                                AddGroupCall.enqueue(new Callback<String>() {
+                                    @Override
+                                    public void onResponse(Call<String> call, Response<String> response) {
+                                        Log.i("SettingsActivity", "Success calling CreateGroup API.");
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<String> call, Throwable t) {
+                                        Log.e("SettingsActiviy", "Error when calling CreateGroup API");
+                                    }
+                                });
                             }
 
                             Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsLeaderActivity.class);
                             startActivity(settingsLeaderScreen);
                         }
-                        Log.d("test1", "test1" + newValue.toString());
+                        Log.d("SettingsActivity", "CreateGroup" + newValue.toString());
                         //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
                         return true;
                     }
