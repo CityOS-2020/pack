@@ -20,6 +20,16 @@
                 android:enabled="false"
                 android:title="You are part of WolfPack"></Preference>
 
+            <MultiSelectListPreference
+                android:dialogTitle="@string/mode_repeat"
+                android:key="mode_repeat"
+                android:summary="List of users in your group"
+                android:title="@string/mode_repeat"
+                android:entries="@array/listArray"
+                android:entryValues="@array/listValues"
+                android:defaultValue="@array/empty_array"
+                />
+
         </PreferenceScreen>
 
         <Preference
