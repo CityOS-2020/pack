@@ -9,6 +9,7 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -35,6 +36,12 @@ public interface PackApi {
 
     @POST("Groups/AddGroup/{groupName}")
     Call<String> AddGroup(@Body Member member, @Path("groupName") String groupName);
+
+    @PUT("Groups/RemoveGroup/{groupName}")
+    Call<String> RemoveGroup(@Path("groupName") String groupName);
+
+    @DELETE("Groups/RemoveMemberFromGroup")
+    Call<String> RemoveMemberFromGroup(@Body String username);
 
     public static final Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("http://172.18.1.172/PackWebApiServices/api/")

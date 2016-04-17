@@ -12,6 +12,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.maestral.pack.packapp.API.PackApi;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SettingsMemberActivity extends PreferenceActivity {
 
     @Override
@@ -21,11 +27,15 @@ public class SettingsMemberActivity extends PreferenceActivity {
     }
 
     public static class MemberScreenFragment extends PreferenceFragment {
+
         PreferenceScreen mainScreen;
+        PackApi mAPI;
 
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+
+            mAPI = PackApi.retrofit.create(PackApi.class);
 
             addPreferencesFromResource(R.xml.memberscreen);
 
@@ -113,9 +123,23 @@ public class SettingsMemberActivity extends PreferenceActivity {
 
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
-                        Intent settingsActivity = new Intent(MyApplication.getAppContext(), SettingsActivity.class);
-                        settingsActivity.putExtra("EventTriggered", 2);
-                        startActivity(settingsActivity);
+                        Call<String> RemoveMemberFromGroupCall = mAPI.RemoveMemberFromGroup(Self.getInstance().member.userName);
+
+                        RemoveMemberFromGroupCall.enqueue(new Callback<String>() {
+                            @Override
+                            public void onResponse(Call<String> call, Response<String> response) {
+                                Log.i("SettingsMemberActivity", "Success calling LeaveGroup API.");
+
+                                Intent settingsActivity = new Intent(MyApplication.getAppContext(), SettingsActivity.class);
+                                settingsActivity.putExtra("EventTriggered", 2);
+                                startActivity(settingsActivity);
+                            }
+
+                            @Override
+                            public void onFailure(Call<String> call, Throwable t) {
+                                Log.e("SettingsMemberActivity", "Error when calling LeaveGroup API");
+                            }
+                        });
 
                         //Log.e("EditTextPreference","In onPreferenceClick, groupname: " + strUserGroup);
                         return true;

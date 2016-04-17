@@ -159,6 +159,9 @@ public class SettingsActivity extends PreferenceActivity {
                                     @Override
                                     public void onResponse(Call<String> call, Response<String> response) {
                                         Log.i("SettingsActivity", "Success calling CreateGroup API.");
+
+                                        Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsLeaderActivity.class);
+                                        startActivity(settingsLeaderScreen);
                                     }
 
                                     @Override
@@ -167,9 +170,6 @@ public class SettingsActivity extends PreferenceActivity {
                                     }
                                 });
                             }
-
-                            Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsLeaderActivity.class);
-                            startActivity(settingsLeaderScreen);
                         }
                         Log.d("SettingsActivity", "CreateGroup" + newValue.toString());
                         //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
@@ -196,6 +196,9 @@ public class SettingsActivity extends PreferenceActivity {
                                     @Override
                                     public void onResponse(Call<String> call, Response<String> response) {
                                         Log.i("SettingsActivity", "Success calling JoinGroup API.");
+
+                                        Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsMemberActivity.class);
+                                        startActivity(settingsLeaderScreen);
                                     }
 
                                     @Override
@@ -204,10 +207,8 @@ public class SettingsActivity extends PreferenceActivity {
                                     }
                                 });
                             }
-                            Intent settingsLeaderScreen = new Intent(MyApplication.getAppContext(), SettingsMemberActivity.class);
-                            startActivity(settingsLeaderScreen);
                         }
-                        Log.d("test1", "memberScreen");
+                        Log.d("SettingsActivity", "JoinGroup");
                         //startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),REQUEST_CODE_PICK_CONTACTS);
                         return true;
                     }

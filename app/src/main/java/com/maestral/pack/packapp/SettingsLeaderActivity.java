@@ -11,6 +11,12 @@ import android.preference.PreferenceScreen;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.maestral.pack.packapp.API.PackApi;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SettingsLeaderActivity extends PreferenceActivity {
 
     @Override
@@ -21,6 +27,7 @@ public class SettingsLeaderActivity extends PreferenceActivity {
 
     public static class LeaderScreenFragment extends PreferenceFragment {
 
+        PackApi mAPI;
         PreferenceScreen mainScreen;
 
         @Override
@@ -28,6 +35,8 @@ public class SettingsLeaderActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
 
             addPreferencesFromResource(R.xml.leaderscreen);
+
+            mAPI = PackApi.retrofit.create(PackApi.class);
 
             mainScreen = (PreferenceScreen) findPreference("leaderPrefScreen");
 
@@ -114,9 +123,26 @@ public class SettingsLeaderActivity extends PreferenceActivity {
 
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
-                        Intent settingsActivity = new Intent(MyApplication.getAppContext(), SettingsActivity.class);
-                        settingsActivity.putExtra("EventTriggered", 3);
-                        startActivity(settingsActivity);
+
+                        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+
+                        Call<String> RemoveGroupCall = mAPI.RemoveGroup(SP.getString("createGroup", ""));
+
+                        RemoveGroupCall.enqueue(new Callback<String>() {
+                            @Override
+                            public void onResponse(Call<String> call, Response<String> response) {
+                                Log.i("SettingsLeaderActivity", "Success calling CloseGroup API.");
+
+                                Intent settingsActivity = new Intent(MyApplication.getAppContext(), SettingsActivity.class);
+                                settingsActivity.putExtra("EventTriggered", 3);
+                                startActivity(settingsActivity);
+                            }
+
+                            @Override
+                            public void onFailure(Call<String> call, Throwable t) {
+                                Log.e("SettingsLeaderActivity", "Error when calling CloseGroup API");
+                            }
+                        });
 
                         //Log.e("EditTextPreference","In onPreferenceClick, groupname: " + strUserGroup);
                         return true;
